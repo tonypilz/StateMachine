@@ -3,23 +3,22 @@
 #include "State.h"
 #include <iostream>
 
-struct State2;
+struct StateB;
 
-struct State1 {
-    void onEnter(){std::cout<<"State1::onEnter"<<std::endl;}
-    void onLeave(){std::cout<<"State1::onLeave"<<std::endl;}
-    void onLeaveEnter(){std::cout<<"State1::onLeaveEnter"<<std::endl;}
+struct StateA {
+    void entry(){std::cout<<"State1::entry"<<std::endl;}
+    void exit(){std::cout<<"State1::exit"<<std::endl;}
+    void selfTransition(){std::cout<<"State1::selfTransition"<<std::endl;}
 
-    using G = GenericState<int, State1*,State2*>;
-    using V = std::variant<State2*,State1*, G*>;
+    using G = GenericState<int, StateA*,StateB*>;
+    using V = std::variant<StateB*,StateA*, G*>;
 
-    std::optional<V> nextState(int s){
-        if (s==4) return stateOn4;
-        if (s==5) return stateOn5;
+    std::optional<V> nextState(std::optional<int> s){
+        if (s.has_value()==false) return stateDefault;
+        if (s.value()==4) return stateOn4;
+        if (s.value()==5) return stateOn5;
         return V{};
     }
-
-    std::optional<V> nextState(){return stateDefault;}
 
     V stateOn4;
     V stateOn5;

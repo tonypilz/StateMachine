@@ -8,6 +8,10 @@
 #include <variant>
 
 //nulltransition bei generic state gibts keine -> die conditions müssen die nulltransistion // any transition nicht möglich da random event,
+template<typename Actions>
+void executeAll(Actions const& actions){
+    for(auto const& action:actions) action();
+}
 
 template<typename Event, typename... OtherStates>
 struct GenericState {
@@ -28,13 +32,14 @@ struct GenericState {
     using Action = std::function<void()>;
     using Actions = std::vector<Action>;
 
-    Actions enterOperations;
-    Actions leaveOperations;
-    Actions leaveEnterOperations;
+    Actions entryActions;
+    Actions exitActions;
+    Actions selfTransitionActions;
 
-    void onEnter(){std::for_each(enterOperations.begin(),enterOperations.end(),[](Action const& action){action();});}
-    void onLeave(){std::for_each(leaveOperations.begin(),leaveOperations.end(),[](Action const& action){action();});}
-    void onLeaveEnter(){std::for_each(leaveEnterOperations.begin(),leaveEnterOperations.end(),[](Action const& action){action();});}
+
+    void entry(){executeAll(entryActions);}
+    void exit(){executeAll(exitActions);}
+    void selfTransition(){executeAll(selfTransitionActions);}
 
     template<typename St>
     void defineTransition(Condition cond, St* state) {
@@ -42,20 +47,26 @@ struct GenericState {
     }
 
     template<typename St>
-    void defineTransition(St* state) {
-        nullTransition = state;
+    void defineTransition(NullCondition cond, St* state) {
+        nullTransition.emplace_back(cond,state);
     }
 
-    std::optional<State> nextState() const{ //Event can be nulltransition
-        return nullTransition;
+    std::optional<State> nextState_() const{ //Event can be nulltransition
+        auto it = std::find_if(nullTransition.begin(),nullTransition.end(), [](auto&& transition){return std::get<conditionIdx>(transition)();}); //todo check for more than one condition true -> throw
+        if (it==nullTransition.end()) return std::optional<State>();
+        return std::get<stateIdx>(*it);
     }
 
-    std::optional<State> nextState(Event event) const{ //more than one event possible by inheriting from multiple generic states -> pull nulltransition up to have only one => maybe separeate event and other states!
+    std::optional<State> nextState_(Event event) const{ //more than one event possible by inheriting from multiple generic states -> pull nulltransition up to have only one => maybe separeate event and other states!
         auto it = std::find_if(transitions.begin(),transitions.end(), [event](auto&& transition){return std::get<conditionIdx>(transition)(event);}); //todo check for more than one condition true -> throw
         if (it==transitions.end()) return std::optional<State>();
         return std::get<stateIdx>(*it);
     }
 
+    std::optional<State> nextState(std::optional<Event> event) const{ //more than one event possible by inheriting from multiple generic states -> pull nulltransition up to have only one => maybe separeate event and other states!
+        return event.has_value() ? nextState_(event.value()) : nextState_();
+    }
+
     std::vector<Transition> transitions;
-    std::optional<State> nullTransition;
+    std::vector<NullTransition> nullTransition;
 };

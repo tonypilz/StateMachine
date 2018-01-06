@@ -1,16 +1,20 @@
 #pragma once
 
+#include <optional>
+#include <iostream>
+#include <variant>
 
-struct State2 {
-    void onEnter(){std::cout<<"State2::onEnter"<<std::endl;}
-    void onLeave(){std::cout<<"State2::onLeave"<<std::endl;}
-    void onLeaveEnter(){std::cout<<"State2::onLeaveEnter"<<std::endl;}
+struct StateA;
 
-    std::optional<std::variant<State1*>> nextState(int event){return any;}//any event cond
-    std::optional<std::variant<State1*>> nextState(const char*){std::cout<<"nextState(const char*)\n";return any;}//any event cond
+struct StateB {
+    void entry(){std::cout<<"State2::entry"<<std::endl;}
+    void exit(){std::cout<<"State2::exit"<<std::endl;}
+    void selfTransition(){std::cout<<"State2::selfTransition"<<std::endl;}
 
-    std::optional<std::variant<State1*>> nextState(){return any;}
+    std::optional<std::variant<StateA*>> nextState(std::optional<int> event){return any;}//any event cond
+    std::optional<std::variant<StateA*>> nextState(std::optional<const char*>){std::cout<<"nextState(const char*)\n";return any;}//any event cond
 
-    State1* any;
+
+    StateA* any;
 };
 

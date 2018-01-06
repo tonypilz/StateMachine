@@ -13,7 +13,7 @@ HEADERS += \
     StateA.h \
     StateB.h \
     StateMachine.h \
-    StateMachineState.h
+    NestedState.h
 
 
 
