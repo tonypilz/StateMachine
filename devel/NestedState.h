@@ -11,6 +11,8 @@ struct NestedState : public GenericState<Event, NestedState<Machine, Event, Othe
     using Classtype = NestedState<Machine, Event, OtherStates...>;
     using Superclass = GenericState<Event, Classtype*, OtherStates...>;
     using State = typename Superclass::State;
+    using OptionalTransition = typename Superclass::OptionalTransition;
+    using OptionalAction = typename Superclass::OptionalAction;
 
     NestedState(Machine& mach):Superclass(),machine(mach){}
 
@@ -20,7 +22,7 @@ struct NestedState : public GenericState<Event, NestedState<Machine, Event, Othe
 
     Machine& machine;
 
-    std::optional<State> nextState(std::optional<Event> event) {
+    OptionalTransition nextState(std::optional<Event> event) {
 
         auto next = Superclass::nextState(event);
         if(next.has_value())
@@ -29,6 +31,10 @@ struct NestedState : public GenericState<Event, NestedState<Machine, Event, Othe
         //no next state - forward to sub machine
         machine.processEvent(event);
 
-        return machine.isValid() ? this : std::optional<State>();  //propagate errors up
+        OptionalTransition t = std::make_tuple(this, OptionalAction{});
+        OptionalTransition n = OptionalTransition();
+        return machine.isValid() ? t : n ;  //propagate errors up
     }
 };
+
+

@@ -13,11 +13,19 @@ struct StateA {
     using G = GenericState<int, StateA*,StateB*>;
     using V = std::variant<StateB*,StateA*, G*>;
 
-    std::optional<V> nextState(std::optional<int> s){
-        if (s.has_value()==false) return stateDefault;
-        if (s.value()==4) return stateOn4;
-        if (s.value()==5) return stateOn5;
-        return V{};
+    using OptionalAction = std::optional<std::function<void(std::optional<int>)>>;
+
+    using Trans = std::optional<
+                    std::tuple<
+                        V,
+                        OptionalAction
+                              >>;
+
+    Trans nextState(std::optional<int> s){
+        if (s.has_value()==false) return std::make_tuple(stateDefault, OptionalAction{});
+        if (s.value()==4)         return std::make_tuple(stateOn4, OptionalAction{});
+        if (s.value()==5)         return std::make_tuple(stateOn5, OptionalAction{});
+        return Trans{};
     }
 
     V stateOn4;

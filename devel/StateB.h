@@ -11,8 +11,18 @@ struct StateB {
     void exit(std::optional<int> event){std::cout<<"State2::exit"<<std::endl;}
     void selfTransition(std::optional<int> event){std::cout<<"State2::selfTransition"<<std::endl;}
 
-    std::optional<std::variant<StateA*>> nextState(std::optional<int> ){return any;}//any event cond
-    std::optional<std::variant<StateA*>> nextState(std::optional<const char*>){std::cout<<"nextState(const char*)\n";return any;}//any event cond
+
+    using OptionalAction = std::optional<std::function<void(std::optional<int>)>>;
+    using V = std::variant<StateA*>;
+
+    using Trans = std::optional<
+                    std::tuple<
+                        V,
+                        OptionalAction
+                              >>;
+
+    Trans nextState(std::optional<int> s){return std::make_tuple(any, OptionalAction{}); }
+    Trans nextState(std::optional<const char*>){std::cout<<"nextState(const char*)\n"; return std::make_tuple(any, OptionalAction{}); }
 
 
     StateA* any;
