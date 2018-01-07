@@ -6,9 +6,9 @@
 struct StateB;
 
 struct StateA {
-    void entry(){std::cout<<"State1::entry"<<std::endl;}
-    void exit(){std::cout<<"State1::exit"<<std::endl;}
-    void selfTransition(){std::cout<<"State1::selfTransition"<<std::endl;}
+    void entry(std::optional<int> event){std::cout<<"State1::entry"<<std::endl;}
+    void exit(std::optional<int> event){std::cout<<"State1::exit"<<std::endl;}
+    void selfTransition(std::optional<int> event){std::cout<<"State1::selfTransition"<<std::endl;}
 
     using G = GenericState<int, StateA*,StateB*>;
     using V = std::variant<StateB*,StateA*, G*>;

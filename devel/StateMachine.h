@@ -5,48 +5,48 @@
 
 
 
-template<typename State>
-void callOnLeave(State state){
-    state->exit();
+template<typename Event, typename State>
+void callOnLeave(std::optional<Event> event, State state){
+    state->exit(event);
 }
 
-template<typename... States>
-void callOnLeave(std::variant<States...> states){
-    std::visit([](auto&& state) { callOnLeave(state); }, states);
+template<typename Event, typename... States>
+void callOnLeave(std::optional<Event> event, std::variant<States...> states){
+    std::visit([event](auto&& state) { callOnLeave(event, state); }, states);
 }
 
-template<typename State>
-void callOnLeave(std::optional<State> state){
-    if (state.has_value())  callOnLeave(state.value());
+template<typename Event, typename State>
+void callOnLeave(std::optional<Event> event, std::optional<State> state){
+    if (state.has_value())  callOnLeave(event, state.value());
 }
-template<typename State>
-void callOnEnter(State state){
-    state->entry();
-}
-
-template<typename... States>
-void callOnEnter(std::variant<States...> states){
-    std::visit([](auto&& state) { callOnEnter(state); }, states);
+template<typename Event, typename State>
+void callOnEnter(std::optional<Event> event, State state){
+    state->entry(event);
 }
 
-template<typename State>
-void callOnEnter(std::optional<State> state){
-    if (state.has_value())  callOnEnter(state.value());
+template<typename Event, typename... States>
+void callOnEnter(std::optional<Event> event, std::variant<States...> states){
+    std::visit([event](auto&& state) { callOnEnter(event, state); }, states);
 }
 
-template<typename State>
-void callOnLeaveEnter(State state){
-    state->selfTransition();
+template<typename Event, typename State>
+void callOnEnter(std::optional<Event> event, std::optional<State> state){
+    if (state.has_value())  callOnEnter(event, state.value());
 }
 
-template<typename... States>
-void callOnLeaveEnter(std::variant<States...> states){
-    std::visit([](auto&& state) { callOnLeaveEnter(state); }, states);
+template<typename Event, typename State>
+void callOnLeaveEnter(std::optional<Event> event, State state){
+    state->selfTransition(event);
 }
 
-template<typename State>
-void callOnLeaveEnter(std::optional<State> state){
-    if (state.has_value())  callOnLeaveEnter(state.value());
+template<typename Event, typename... States>
+void callOnLeaveEnter(std::optional<Event> event, std::variant<States...> states){
+    std::visit([event](auto&& state) { callOnLeaveEnter(event, state); }, states);
+}
+
+template<typename Event, typename State>
+void callOnLeaveEnter(std::optional<Event> event, std::optional<State> state){
+    if (state.has_value())  callOnLeaveEnter(event, state.value());
 }
 
 
@@ -61,69 +61,70 @@ struct StateMachine{
 
     enum TransitionResult {transitionExecuted, noTransition};
 
-
+    template<typename Event>
     void clearCurrentState(){
-        setCurrentState(std::optional<State>{});
+        setCurrentState(std::optional<Event>{}, std::optional<State>{});
     }
 
+    template<typename Event>
     void resetCurrentState() {
-        setCurrentState(std::optional<State>{defaultState});
+        setCurrentState(std::optional<Event>{}, std::optional<State>{defaultState});
     }
 
     bool isValid() const { return activeState.has_value();}
 
 
-    template<typename CurrentStateT>
-    void setCurrentStateN(CurrentStateT currentStateT, CurrentStateT nextStateT){
+    template<typename Event, typename CurrentStateT>
+    void setCurrentStateN(std::optional<Event> event, CurrentStateT currentStateT, CurrentStateT nextStateT){
         if (currentStateT==nextStateT) {
-            currentStateT->selfTransition();
+            currentStateT->selfTransition(event);
         }else {
-            currentStateT->exit();
+            currentStateT->exit(event);
             activeState = nextStateT;
-            nextStateT->entry();
+            nextStateT->entry(event);
         }
     }
 
-    template<typename CurrentStateT, typename NextStateT>
-    void setCurrentStateN(CurrentStateT currentStateT, NextStateT nextStateT){
-        currentStateT->exit();
+    template<typename Event, typename CurrentStateT, typename NextStateT>
+    void setCurrentStateN(std::optional<Event> event, CurrentStateT currentStateT, NextStateT nextStateT){
+        currentStateT->exit(event);
         activeState = nextStateT;
-        nextStateT->entry();
+        nextStateT->entry(event);
     }
 
-    template<typename CurrentStateT, typename... States>
-    TransitionResult setCurrentState(CurrentStateT currentStateT, std::optional<std::variant<States...>> nextState){
+    template<typename Event, typename CurrentStateT, typename... States>
+    TransitionResult setCurrentState(std::optional<Event> event, CurrentStateT currentStateT, std::optional<std::variant<States...>> nextState){
 
         if (nextState.has_value()==false) {
-            currentStateT->exit();
+            currentStateT->exit(event);
             activeState = std::optional<State>{};
             return transitionExecuted;
         }
 
-        std::visit([currentStateT,this](auto&& nextStateT) { setCurrentStateN(currentStateT,nextStateT); }, nextState.value());
+        std::visit([currentStateT,this,event](auto&& nextStateT) { setCurrentStateN(event,currentStateT,nextStateT); }, nextState.value());
 
         return transitionExecuted;
 
     }
 
-    template<typename... States>
-    TransitionResult setCurrentState(std::optional<std::variant<States...>> nextState){
+    template<typename Event, typename... States>
+    TransitionResult setCurrentState(std::optional<Event> event, std::optional<std::variant<States...>> nextState){
 
         if (activeState.has_value()==false) {
             if (nextState.has_value()==false) return noTransition; //noting to do
             activeState = nextState;
-            callOnEnter(activeState);
+            callOnEnter(event,activeState);
             return transitionExecuted;
         }
 
-        return std::visit([this,nextState](auto&& currentStateT) { return setCurrentState(currentStateT,nextState); }, activeState.value());
+        return std::visit([this,nextState,event](auto&& currentStateT) { return setCurrentState(event, currentStateT,nextState); }, activeState.value());
     }
 
 
 
     template<typename Event,typename CurrentStateT>
     auto processEventRT(std::optional<Event> event, CurrentStateT currentStateT, int) -> decltype(currentStateT->nextState(event),TransitionResult()){
-        return setCurrentState(currentStateT, currentStateT->nextState(event));
+        return setCurrentState(event, currentStateT, currentStateT->nextState(event)); //todo: nextState must also provide action to be executed on the transition -> rename to getTransition(event);
     }
     template<typename Event,typename CurrentStateT>
     TransitionResult processEventRT(std::optional<Event>, CurrentStateT, long){

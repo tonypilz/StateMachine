@@ -40,9 +40,9 @@ int main()
     StateA state1;
     G stateg;
 
-    stateg.entryActions.emplace_back([](){std::cout<<"GenericState::entry\n";});
-    stateg.exitActions.emplace_back([](){std::cout<<"GenericState::exit\n";});
-    stateg.selfTransitionActions.emplace_back([](){std::cout<<"GenericState::selfTransition\n";});
+    stateg.entryActions.emplace_back([](std::optional<Event>){std::cout<<"GenericState::entry\n";});
+    stateg.exitActions.emplace_back([](std::optional<Event>){std::cout<<"GenericState::exit\n";});
+    stateg.selfTransitionActions.emplace_back([](std::optional<Event>){std::cout<<"GenericState::selfTransition\n";});
 
     stateg.defineTransition([](int event) { return event==4;}, &state1);
     stateg.defineTransition([](int event) { return event==5;}, &state2);

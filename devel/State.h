@@ -8,9 +8,9 @@
 #include <variant>
 
 //nulltransition bei generic state gibts keine -> die conditions müssen die nulltransistion // any transition nicht möglich da random event,
-template<typename Actions>
-void executeAll(Actions const& actions){
-    for(auto const& action:actions) action();
+template<typename Event, typename Actions>
+void executeAll(std::optional<Event> event, Actions const& actions){
+    for(auto const& action:actions) action(event);
 }
 
 template<typename Event, typename... OtherStates>
@@ -29,7 +29,7 @@ struct GenericState {
     using Transition     = std::tuple<    Condition,State>;
     using NullTransition = std::tuple<NullCondition,State>;
 
-    using Action = std::function<void()>;
+    using Action = std::function<void(std::optional<Event>)>;
     using Actions = std::vector<Action>;
 
     Actions entryActions;
@@ -37,9 +37,9 @@ struct GenericState {
     Actions selfTransitionActions;
 
 
-    void entry(){executeAll(entryActions);}
-    void exit(){executeAll(exitActions);}
-    void selfTransition(){executeAll(selfTransitionActions);}
+    void entry(std::optional<Event> event){executeAll(event, entryActions);}
+    void exit(std::optional<Event> event){executeAll(event,exitActions);}
+    void selfTransition(std::optional<Event> event){executeAll(event,selfTransitionActions);}
 
     template<typename St>
     void defineTransition(Condition cond, St* state) {

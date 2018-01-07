@@ -14,9 +14,9 @@ struct NestedState : public GenericState<Event, NestedState<Machine, Event, Othe
 
     NestedState(Machine& mach):Superclass(),machine(mach){}
 
-    void entry(){ Superclass::entry(); machine.resetCurrentState(); } //no entry for default state
-    void exit(){ Superclass::exit(); machine.clearCurrentState(); }
-    void selfTransition(){ Superclass::selfTransition();}
+    void entry(std::optional<Event> event){ Superclass::entry(event); machine.template resetCurrentState<Event>(); } //no entry for default state
+    void exit(std::optional<Event> event){ Superclass::exit(event); machine.template clearCurrentState<Event>(); }
+    void selfTransition(std::optional<Event> event){ Superclass::selfTransition(event);}
 
     Machine& machine;
 
