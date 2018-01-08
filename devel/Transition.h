@@ -111,7 +111,7 @@ struct Transition {
 
 
     template<typename OldState, typename Event, typename NewState>
-    bool apply(OldState oldState, std::optional<Event> ev, std::function<void(NewState)> changeState){
+    bool make(OldState oldState, std::optional<Event> ev, std::function<void(NewState)> changeState){
 
         OptionalEvent event = ev.has_value() ? ev.value() : OptionalEvent{}; //cast to correct type
 
