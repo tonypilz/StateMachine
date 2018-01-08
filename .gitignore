@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+build-devel-Desktop-Debug
+*.pro.user
+
