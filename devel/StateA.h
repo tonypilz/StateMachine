@@ -21,12 +21,13 @@ struct StateA {
 
 
     template<typename NewStateVariant>
-    bool makeTransition(std::optional<int> event, std::function<void(NewStateVariant)> changeState){
+    EventProcessingResult makeTransition(std::optional<int> event, std::function<void(NewStateVariant)> changeState){
 
-        if (event.has_value()==false) { changeState(variantCast<NewStateVariant>(stateDefault)); return true;}
-        if (event.value()==4) { changeState(variantCast<NewStateVariant>(stateOn4)); return true;}
-        if (event.value()==5) { changeState(variantCast<NewStateVariant>(stateOn5)); return true;}
+        if (event.has_value()==false) { changeState(variantCast<NewStateVariant>(stateDefault)); return EventProcessingResult::transitionCompleted;}
+        if (event.value()==4) { changeState(variantCast<NewStateVariant>(stateOn4)); return EventProcessingResult::transitionCompleted;}
+        if (event.value()==5) { changeState(variantCast<NewStateVariant>(stateOn5)); return EventProcessingResult::transitionCompleted;}
 
+        return EventProcessingResult::transitionError;
     }
 
 

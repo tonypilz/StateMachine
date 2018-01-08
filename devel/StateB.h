@@ -4,6 +4,8 @@
 #include <iostream>
 #include <variant>
 
+#include "EventProcessingResult.h"
+
 struct StateA;
 
 struct StateB {
@@ -18,15 +20,15 @@ struct StateB {
 
 
     template<typename NewState>
-    bool makeTransition(std::optional<int> event, std::function<void(NewState)> changeState){
+    EventProcessingResult makeTransition(std::optional<int> event, std::function<void(NewState)> changeState){
         changeState(any);
-        return true;
+        return EventProcessingResult::transitionCompleted;
     }
     template<typename NewState>
-    bool makeTransition(std::optional<const char*>, std::function<void(NewState)> changeState){
+    EventProcessingResult makeTransition(std::optional<const char*>, std::function<void(NewState)> changeState){
         std::cout<<"nextState(const char*)\n";
         changeState(any);
-        return true;
+        return EventProcessingResult::transitionCompleted;
     }
 
 

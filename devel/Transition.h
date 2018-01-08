@@ -42,12 +42,12 @@ void tryCallEntry( std::variant<States...> states, Event event){
 
 
 template<typename Event, typename AllEventsVariantOptional>
-std::function<bool(AllEventsVariantOptional)> generalize(std::function<bool(Event)> func){
+std::function<bool(AllEventsVariantOptional)> generalize(std::function<bool(Event)> func, bool noArgReturnValue, bool unexpectedArgTypeReturnValue){
 
-    return [func](AllEventsVariantOptional ev){
-        if (ev.has_value()==false) return false;
+    return [=](AllEventsVariantOptional ev){
+        if (ev.has_value()==false) return noArgReturnValue;
         auto e = ev.value();
-        if (std::holds_alternative<Event>(e)==false) return false;
+        if (std::holds_alternative<Event>(e)==false) return unexpectedArgTypeReturnValue;
         auto event = std::get<Event>(e);
         return func(event);
     };
@@ -56,7 +56,7 @@ std::function<bool(AllEventsVariantOptional)> generalize(std::function<bool(Even
 template<typename Event, typename AllEventsVariantOptional>
 std::function<void(AllEventsVariantOptional)> generalize(std::function<void(Event)> func){
 
-    return [func](AllEventsVariantOptional ev){
+    return [=](AllEventsVariantOptional ev){
         if (ev.has_value()==false) return;
         auto e = ev.value();
         if (std::holds_alternative<Event>(e)==false) return;
@@ -66,22 +66,22 @@ std::function<void(AllEventsVariantOptional)> generalize(std::function<void(Even
 }
 
 template<typename AllEventsVariantOptional>
-std::function<void(AllEventsVariantOptional)> generalize(std::function<void()> func){
+std::function<void(AllEventsVariantOptional)> generalize(std::function<void()> func, std::function<void()> funcNoValue){
 
-    return [func](AllEventsVariantOptional ev){
-        if (ev.has_value()) return;
-        func();
+    return [=](AllEventsVariantOptional ev){
+        if (ev.has_value()) func(); else funcNoValue();
     };
+
 }
 
 template<typename AllEventsVariantOptional>
-std::function<bool(AllEventsVariantOptional)> generalize( std::function<bool()> func){
+std::function<bool(AllEventsVariantOptional)> generalize( std::function<bool()> func, std::function<bool()> funcNoValue){
 
-    return [func](AllEventsVariantOptional ev){
-        if (ev.has_value()==false) return false;
-        return func();
+    return [=](AllEventsVariantOptional ev){
+        return ev.has_value() ? func() : funcNoValue();
     };
 }
+
 
 template<typename AllEventsVariant, typename NextStateVariant>
 struct Transition {
@@ -99,23 +99,18 @@ struct Transition {
 
     template<typename Event>
     Transition( std::function<bool(Event)> guard_, NextStateVariant nextState_ ):
-        guard(generalize<Event,std::optional<AllEventsVariant>> (guard_)),nextState(nextState_){}
+        guard(generalize<Event,std::optional<AllEventsVariant>> (guard_,false,false)),nextState(nextState_){}
 
 
     Transition( std::function<bool()> guard_, NextStateVariant nextState_ ):
-        guard(generalize<std::optional<AllEventsVariant>> (guard_)),nextState(nextState_){}
+        guard(generalize<std::optional<AllEventsVariant>> ([](){return false;},guard_)),nextState(nextState_){}
 
 //    Transition( Guard guard_, NextStateVariant nextState_ ):
 //        guard(guard_),nextState(nextState_){}
 
-
-
-    template<typename OldState, typename Event, typename NewState>
-    bool make(OldState oldState, std::optional<Event> ev, std::function<void(NewState)> changeState){
-
-        OptionalEvent event = ev.has_value() ? ev.value() : OptionalEvent{}; //cast to correct type
-
-        if (guard(event)==false) return false;//transition not applicable
+    template<typename OldState, typename NewState>
+    bool apply(OldState oldState, OptionalEvent event, std::function<void(NewState)> changeState){
+          if (guard(event)==false) return false;//transition not applicable
 
         //apply transition
 
@@ -128,6 +123,11 @@ struct Transition {
         tryCallEntry(nextState,event);
 
         return true;
+    }
+
+    template<typename OldState, typename Event, typename NewState>
+    bool apply(OldState oldState, std::optional<Event> ev, std::function<void(NewState)> changeState){
+        return apply(oldState,ev.has_value() ? ev.value() : OptionalEvent{},changeState);
     }
 
     Guard guard;

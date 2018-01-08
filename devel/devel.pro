@@ -14,7 +14,8 @@ HEADERS += \
     StateMachine.h \
     NestedState.h \
     GenericState.h \
-    Transition.h
+    Transition.h \
+    EventProcessingResult.h
 
 
 
