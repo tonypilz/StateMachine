@@ -5,9 +5,12 @@
 #include <variant>
 
 #include "EventProcessingResult.h"
+#include "NestedState.h"
 
 struct StateA;
-
+/**
+ * @brief The StateB struct is a dummy implementation for proving that custom implementations of GenericState are feasible.
+ */
 struct StateB {
 
 
@@ -31,6 +34,27 @@ struct StateB {
         return EventProcessingResult::transitionCompleted;
     }
 
+    template<typename NewStateVariant>
+    EventProcessingResult makeTransition(std::optional<ExitEvent> event, std::function<void(NewStateVariant)> changeState){
+
+        return EventProcessingResult::transitionCompleted;
+
+    }
+
+    template<typename Func>
+    void for_each_reachable_state(Func func, std::set<void*>& reached){
+        void* this_v = static_cast<void*>(this);
+
+        if (reached.find(this_v)!=reached.end()) return;
+
+        reached.insert(static_cast<void*>(this));
+        func(this);
+    }
+
+    template<typename NextStateVariant>
+    void defineTransition( std::function<bool(ExitEvent)>, NextStateVariant nextState_ ){
+
+    }
 
     StateA* any;
 };

@@ -2,10 +2,13 @@
 
 #include "GenericState.h"
 #include <iostream>
+#include "NestedState.h"
 
 struct StateB;
 
-
+/**
+ * @brief The StateA struct is a dummy implementation for proving that custom implementations of GenericState are feasible.
+ */
 
 struct StateA {
 
@@ -14,7 +17,7 @@ struct StateA {
     template<typename T> void selfTransition(T){std::cout<<"State1::selfTransition"<<std::endl;}
 
 
-    using G = GenericState<std::variant<int,const char*>, StateA*,StateB*>;
+    using G = GenericState<std::variant<int,const char*,ExitEvent,EntryEvent>, StateA*,StateB*>;
     using V = std::variant<StateB*,StateA*, G*>;
 
     using OptionalAction = std::optional<std::function<void(std::optional<int>)>>;
@@ -30,8 +33,34 @@ struct StateA {
         return EventProcessingResult::transitionError;
     }
 
+    template<typename NewStateVariant>
+    EventProcessingResult makeTransition(std::optional<ExitEvent> event, std::function<void(NewStateVariant)> changeState){
+
+        changeState(stateOnExit);
+        return EventProcessingResult::transitionCompleted;
+
+    }
+
+    template<typename Func>
+    void for_each_reachable_state(Func func, std::set<void*>& reached){
+
+        void* this_v = static_cast<void*>(this);
+
+        if (reached.find(this_v)!=reached.end()) return;
+
+        reached.insert(static_cast<void*>(this));
+        func(this);
+
+    }
+
+    template<typename NextStateVariant>
+    void defineTransition( std::function<bool(ExitEvent)>, NextStateVariant nextState_ ){
+        stateOnExit = nextState_;
+    }
+
 
     V stateOn4;
     V stateOn5;
     V stateDefault;
+    V stateOnExit;
 };

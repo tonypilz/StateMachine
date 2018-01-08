@@ -15,7 +15,12 @@ HEADERS += \
     NestedState.h \
     GenericState.h \
     Transition.h \
-    EventProcessingResult.h
+    EventProcessingResult.h \
+    transitionHelper.h \
+    helper.h
+
+DISTFILES += \
+    ../README.md
 
 
 

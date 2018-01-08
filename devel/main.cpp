@@ -1,38 +1,15 @@
-//nextState soll auch andere Rückgabetypen akzeptieren -> pointer nicht optionals
 
 #include "GenericState.h"
 #include "StateA.h"
 #include "StateB.h"
 #include "StateMachine.h"
 #include "NestedState.h"
-
 #include <iostream>
-
-
-//todo:
-
-// exit mit optional event
-// nulltransition mit bei nextstate zurück liefern -> nicht weil man dann nicht von fehler unterscheiden kann
-
-//arbitrary objects can be states without inheritance
-
-
-//allows compile time checked transitions (each event is a type)
-
-
-// graph doesnt know anything about Machine -> auch wenn ein knoten auch wieder eine machine -> dann weiss die untermaschine nichts von der maschine
-// composability (ein bestehendes netz in ein anderes einbauen)
-
-// todo: visitation aller sub maschinen -> darüber auch xml konvertierung
-
-// 4 ampeln parallel
-
-// minimalist version -> nur generic state
 
 
 int main()
 {
-    using AllEventsVariant = std::variant<int,const char*>;
+    using AllEventsVariant = std::variant<int,const char*,ExitEvent,EntryEvent>;
     using G = GenericState<AllEventsVariant,StateA*,StateB*>;
     using State = G::State;
     using M = StateMachine<State>;
@@ -40,9 +17,11 @@ int main()
     StateB state2;
     StateA state1;
     G stateg;
+    G stateInitial;
 
     using FuncVV = std::function<void()>;
     using FuncVI = std::function<void(int)>;
+
     stateg.defineEntryAction(FuncVV{[](){std::cout<<"GenericState::entry\n";}});
     stateg.defineExitAction(FuncVI([](int ){std::cout<<"GenericState::exit\n";}));
     stateg.defineSelfTransitionAction(FuncVV([](){std::cout<<"GenericState::selfTransition\n";}));
@@ -52,23 +31,23 @@ int main()
     using FuncI = std::function<bool(int)>;
     using FuncV = std::function<bool()>;
 
-    stateg.transitions.push_back(Trans(FuncI([](int event) { return event==4;}),&state1));
-    stateg.transitions.push_back(Trans(FuncI([](int event) { return event==5;}),&state2));
-    stateg.nullTransitions.push_back(Trans(FuncV([]() { return true;}),&stateg));
+
+    stateInitial.defineNullTransition(FuncV([]() { return true;}),&stateg);
+
+    stateg.defineTransition(FuncI([](int event) { return event==4;}),&state1);
+    stateg.defineTransition(FuncI([](int event) { return event==5;}),&state2);
+    stateg.defineNullTransition(FuncV([]() { return true;}),&stateg);
 
     state1.stateDefault = &stateg;
 
     state2.any = &state1;
 
-    M m{&stateg};
+    M m{&stateInitial};
 
-    //optional und vairant sollte impl detail sein -> nicht in definition, nicht in lambdas,
-    //change state methode bereit stellen für A und B
-    //statemachine mit durchreichen
-
+    if(false)
     {
-
-
+        std::cout << "start" << std::endl;
+        m.processEvent();
 
         std::cout << "4" << std::endl;
         m.processEvent(4);
@@ -78,20 +57,34 @@ int main()
         m.processEvent("6");
     }
 
-//    {
-//        using S = NestedState<M, Event>;
-//        using M2 = StateMachine<S::State>;
-//        S sub(m);
 
-//        M2 m2(&sub);
 
-//        std::cout << "4" << std::endl;
-//        m2.processEvent(4);
-//        std::cout << "5" << std::endl;
-//        m2.processEvent(5);
-//        std::cout << "6" << std::endl;
-//        m2.processEvent("6");
-//    }
+    {
+        G stateInactive;
+
+        using S = NestedState<M, AllEventsVariant>;
+        S sub(m,stateInitial,stateInactive);
+
+        using GG = GenericState<AllEventsVariant,S*>;
+
+        GG initialState;
+
+        initialState.defineNullTransition(FuncV([]() { return true;}),&sub);
+
+        S::State xx = &initialState;
+
+        using M2 = StateMachine<S::State>;
+        M2 m2(xx);
+
+        std::cout << "xstart" << std::endl;
+        m2.processEvent();
+        std::cout << "x4" << std::endl;
+        m2.processEvent(4);
+        std::cout << "x5" << std::endl;
+        m2.processEvent(5);
+        std::cout << "x6" << std::endl;
+        m2.processEvent("6");
+    }
 
 }
 

@@ -2,34 +2,18 @@
 
 #include "EventProcessingResult.h"
 
+/**
+ * A state-machine consists of a set of states which are linked by state-transitions.
+ * This class points to the currently active state of the set of states.
+ *
+ * That means it forwards events to the state possibly changing the stated pointed to.
+ *
+ */
 template<typename State>
 struct StateMachine{
 
-    StateMachine(State initialState_) : activeState(initialState_), initialState(initialState_){}
-    std::optional<State> activeState;
-    State initialState;
-
-
-
-    void clearCurrentState(){
-//        setCurrentState(std::optional<Event>{},  std::optional<
-//                        std::tuple<
-//                         State,
-//                         std::optional<std::function<void(std::optional<Event>)>>
-//                                  >> {});
-    }
-
-
-    void resetCurrentState() {
-//        setCurrentState(std::optional<Event>{},
-//                        std::optional<
-//                                               std::tuple<
-//                                                State,
-//                                                std::optional<std::function<void(std::optional<Event>)>>
-//                                                         >> {std::make_tuple(defaultState,std::optional<std::function<void(std::optional<Event>)>>{})});
-    }
-
-    bool isValid() const { return activeState.has_value();}
+    StateMachine(State initialState_) : activeState(initialState_){}
+    State activeState; //there is alway a usable state!
 
     using SetFunction = std::function<void(State)>;
 
@@ -59,8 +43,7 @@ struct StateMachine{
 
         //null transitions
         for(int i=0;i<infinitLoopThreshold;++i)
-            if (activeState.has_value()==false ||
-                    std::visit([this](auto&& currentStateT) { return processEventTX<decltype(currentStateT)>(currentStateT,0); }, activeState.value()) != EventProcessingResult::transitionCompleted)
+            if (std::visit([this](auto&& currentStateT) { return processEventTX<decltype(currentStateT)>(currentStateT,0); }, activeState) != EventProcessingResult::transitionCompleted)
                 return EventProcessingResult::eventNotProcessed; //noting changed so we do not try more null transitions
 
         throw 42;//infinite loop detected
@@ -72,8 +55,7 @@ struct StateMachine{
     EventProcessingResult processEvent(std::optional<Event> event){
 
         //initial event
-        if (activeState.has_value()==false ||
-                std::visit([event,this](auto&& currentStateT) { return processEventT<Event,decltype(currentStateT)>(event,currentStateT,0); }, activeState.value()) != EventProcessingResult::transitionCompleted)
+        if ( std::visit([event,this](auto&& currentStateT) { return processEventT<Event,decltype(currentStateT)>(event,currentStateT,0); }, activeState) != EventProcessingResult::transitionCompleted)
             return EventProcessingResult::eventNotProcessed; //nothing changed so we do not try null transitions
 
         return processEvent();

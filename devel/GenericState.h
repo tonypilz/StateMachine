@@ -7,19 +7,19 @@
 
 #include "Transition.h"
 #include "EventProcessingResult.h"
+#include <set>
 
-template<typename Event, typename Actions>
-void executeAll(Event event, Actions const& actions){
-    for(auto const& action:actions) action(event);
-}
+#include "helper.h"
 
-
-
-
-
-//zuerst die transtions, dann die nulltransitions -> erst alle mit optional(x) dann mit optional (null) durchsuchen
-//wir müssen wissen wenn ein event nicht konsumiert werden konnte -> condition für alle events auf false
-
+/**
+ * This class represetns a single state in a state network.
+ *
+ * It allows to register actions for entry, exit and reentry of the state.
+ *
+ * It handles incoming events by excuting all registered transitions, which
+ * causes a state change if a registered transition fits the the event.
+ *
+ */
 template<typename AllEventsVariant, typename... OtherStates>
 struct GenericState {
 
@@ -54,6 +54,15 @@ struct GenericState {
 
     template<typename Event>
     void defineSelfTransitionAction( std::function<void(Event)> func){selfTransitionActions.emplace_back(generalize<Event,OptionalEvent>(func));}
+
+    template<typename... Args>
+    void defineTransition(Args&&... args){transitions.emplace_back(std::forward<Args>(args)...);}
+
+    template<typename... Args>
+    void defineNullTransition(Args&&... args){nullTransitions.emplace_back(std::forward<Args>(args)...);}
+
+
+
 
 
 
@@ -91,4 +100,42 @@ struct GenericState {
 
     std::vector<TransitionT> transitions;
     std::vector<TransitionT> nullTransitions;
+
+
+
+    //utility functions
+
+    template<typename Func>
+    void for_each_reachable_state(Func func){
+
+        std::set<void*> reached;
+        for_each_reachable_state(func, reached); //entry
+    }
+
+    template<typename Func>
+    void for_each_reachable_state(Func func, std::set<void*>& reached){
+
+        void* this_v = static_cast<void*>(this);
+
+        if (reached.find(this_v)!=reached.end()) return;
+
+        reached.insert(static_cast<void*>(this));
+        func(this);
+
+
+        for_each_reachable_state(func,reached, transitions);
+        for_each_reachable_state(func,reached, nullTransitions);
+
+    }
+
+    template<typename Func>
+    void for_each_reachable_state(Func func, std::set<void*>& reached,std::vector<TransitionT>const& trans){
+
+        for(const auto& t:trans)
+            std::visit([func,&reached](auto&& state){
+                state->for_each_reachable_state(func,reached);
+            },t.nextState);
+
+    }
+
 };
