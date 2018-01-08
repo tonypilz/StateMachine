@@ -15,14 +15,18 @@ struct StateB {
     using OptionalAction = std::optional<std::function<void(std::optional<int>)>>;
     using V = std::variant<StateA*>;
 
-    using Trans = std::optional<
-                    std::tuple<
-                        V,
-                        OptionalAction
-                              >>;
 
-    Trans nextState(std::optional<int> s){return std::make_tuple(any, OptionalAction{}); }
-    Trans nextState(std::optional<const char*>){std::cout<<"nextState(const char*)\n"; return std::make_tuple(any, OptionalAction{}); }
+    template<typename NewState>
+    bool makeTransition(int event, std::function<void(NewState)> changeState){
+        changeState(any);
+        return true;
+    }
+    template<typename NewState>
+    bool makeTransition(const char*, std::function<void(NewState)> changeState){
+        std::cout<<"nextState(const char*)\n";
+        changeState(any);
+        return true;
+    }
 
 
     StateA* any;

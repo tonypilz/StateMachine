@@ -9,11 +9,11 @@ SOURCES += main.cpp
 
 
 HEADERS += \
-    State.h \
     StateA.h \
     StateB.h \
     StateMachine.h \
-    NestedState.h
+    NestedState.h \
+    GenericState.h
 
 
 

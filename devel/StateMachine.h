@@ -1,222 +1,52 @@
 #pragma once
 
-
-
-
-
-
-template<typename Event, typename State>
-void callOnLeave(std::optional<Event> event, State state){
-    state->exit(event);
-}
-
-template<typename Event, typename... States>
-void callOnLeave(std::optional<Event> event, std::variant<States...> states){
-    std::visit([event](auto&& state) { callOnLeave(event, state); }, states);
-}
-
-template<typename Event, typename State>
-void callOnLeave(std::optional<Event> event, std::optional<State> state){
-    if (state.has_value())  callOnLeave(event, state.value());
-}
-template<typename Event, typename State>
-void callOnEnter(std::optional<Event> event, State state){
-    state->entry(event);
-}
-
-template<typename Event, typename... States>
-void callOnEnter(std::optional<Event> event, std::variant<States...> states){
-    std::visit([event](auto&& state) { callOnEnter(event, state); }, states);
-}
-
-template<typename Event, typename State>
-void callOnEnter(std::optional<Event> event, std::optional<State> state){
-    if (state.has_value())  callOnEnter(event, state.value());
-}
-
-template<typename Event, typename State>
-void callOnLeaveEnter(std::optional<Event> event, State state){
-    state->selfTransition(event);
-}
-
-template<typename Event, typename... States>
-void callOnLeaveEnter(std::optional<Event> event, std::variant<States...> states){
-    std::visit([event](auto&& state) { callOnLeaveEnter(event, state); }, states);
-}
-
-template<typename Event, typename State>
-void callOnLeaveEnter(std::optional<Event> event, std::optional<State> state){
-    if (state.has_value())  callOnLeaveEnter(event, state.value());
-}
-
-
-
-
 template<typename State>
 struct StateMachine{
 
-    StateMachine(State defaultState_) : activeState(defaultState_), defaultState(defaultState_){}
+    StateMachine(State initialState_) : activeState(initialState_), initialState(initialState_){}
     std::optional<State> activeState;
-    State defaultState;
-
-
+    State initialState;
 
     enum TransitionResult {transitionExecuted, noTransition};
 
     template<typename Event>
     void clearCurrentState(){
-        setCurrentState(std::optional<Event>{},  std::optional<
-                        std::tuple<
-                         State,
-                         std::optional<std::function<void(std::optional<Event>)>>
-                                  >> {});
+//        setCurrentState(std::optional<Event>{},  std::optional<
+//                        std::tuple<
+//                         State,
+//                         std::optional<std::function<void(std::optional<Event>)>>
+//                                  >> {});
     }
 
     template<typename Event>
     void resetCurrentState() {
-        setCurrentState(std::optional<Event>{},
-                        std::optional<
-                                               std::tuple<
-                                                State,
-                                                std::optional<std::function<void(std::optional<Event>)>>
-                                                         >> {std::make_tuple(defaultState,std::optional<std::function<void(std::optional<Event>)>>{})});
+//        setCurrentState(std::optional<Event>{},
+//                        std::optional<
+//                                               std::tuple<
+//                                                State,
+//                                                std::optional<std::function<void(std::optional<Event>)>>
+//                                                         >> {std::make_tuple(defaultState,std::optional<std::function<void(std::optional<Event>)>>{})});
     }
 
     bool isValid() const { return activeState.has_value();}
 
+    using SetFunction = std::function<void(State)>;
 
-    template<typename Event, typename CurrentStateT>
-    void setCurrentStateN(std::optional<Event> event, CurrentStateT currentStateT, CurrentStateT nextStateT){
-        if (currentStateT==nextStateT) {
-            currentStateT->selfTransition(event);
-        }else {
-            currentStateT->exit(event);
-            activeState = nextStateT;
-            nextStateT->entry(event);
-        }
+    template<typename Event, typename ActiveState>
+    auto processEventT(Event event, ActiveState currentStateT, int) -> decltype(currentStateT->makeTransition(event,SetFunction{}),bool()) {
+        return currentStateT->makeTransition(event,SetFunction{[this](State nextState){activeState = nextState;}});
     }
 
-    template<typename Event, typename CurrentStateT, typename NextStateT>
-    void setCurrentStateN(std::optional<Event> event, CurrentStateT currentStateT, NextStateT nextStateT){
-        currentStateT->exit(event);
-        activeState = nextStateT;
-        nextStateT->entry(event);
+    template<typename Event, typename ActiveState>
+    bool processEventT(Event, ActiveState, long){
+        return false;
     }
-
-    static constexpr auto StateIdx = 0;
-    static constexpr auto ActionIdx = 1;
-
-    template<typename Event, typename CurrentStateT, typename... States>
-    TransitionResult setCurrentState(std::optional<Event> event,
-                                     CurrentStateT currentStateT,
-                                     std::optional<
-                                         std::tuple<
-                                          std::variant<States...>,
-                                          std::optional<std::function<void(std::optional<Event>)>>
-                                                   >> transition){
-
-        if (transition.has_value()==false) {
-            currentStateT->exit(event);
-            activeState = std::optional<State>{};
-            return transitionExecuted;
-        }
-
-        auto nextState = std::get<StateIdx>(transition.value());
-
-        if (auto optAct = std::get<ActionIdx>(transition.value()); optAct.has_value())
-            optAct.value()(event);//call action
-
-
-        std::visit([currentStateT,this,event](auto&& nextStateT) { setCurrentStateN(event,currentStateT,nextStateT); }, nextState);
-
-        return transitionExecuted;
-
-    }
-
-
-    template<typename Event, typename... States>
-    TransitionResult setCurrentState(std::optional<Event> event,
-                                     std::optional<
-                                        std::tuple<
-                                         std::variant<States...>,
-                                         std::optional<std::function<void(std::optional<Event>)>>
-                                                  >> transition){
-
-
-        if (activeState.has_value()==false) {
-            if (transition.has_value()==false) return noTransition; //noting to do
-            activeState = std::get<StateIdx>(transition.value());
-
-            if (auto optAct = std::get<ActionIdx>(transition.value()); optAct.has_value())
-                optAct.value()(event);//call action
-
-            callOnEnter(event,activeState);
-            return transitionExecuted;
-        }
-
-        return std::visit([this,transition,event](auto&& currentStateT) { return setCurrentState(event, currentStateT,transition); }, activeState.value());
-    }
-
-
-
-
-
-
-    template<typename Event,typename CurrentStateT>
-    auto processEventRT(std::optional<Event> event, CurrentStateT currentStateT, int) -> decltype(currentStateT->nextState(event),TransitionResult()){
-        return setCurrentState (event, currentStateT, currentStateT->nextState(event)); //todo: nextState must also provide action to be executed on the transition -> rename to getTransition(event);
-    }
-
-    template<typename Event,typename CurrentStateT>
-    TransitionResult processEventRT(std::optional<Event>, CurrentStateT, long){
-        std::cout<<"wrong event type\n";
-        return noTransition;
-    }
-
-
-
-
-
-    template<typename Event>
-    TransitionResult processEventR(std::optional<Event> event){
-        return activeState.has_value() ?
-                    std::visit([event,this](auto&& currentStateT) { return processEventRT(event,currentStateT, 0); }, activeState.value()) :
-                    noTransition; //todo enter new state
-    }
-
-
-
-    template<typename Event>
-    TransitionResult runToCompletion(){
-
-        TransitionResult res = noTransition;
-
-        std::optional<Event> noEvent;
-
-        for(int i=0; i<infiniteLoopThreshold; ++i){ //infinite loop detection
-            if (processEventR(noEvent)==noTransition) return res; //return bool if transion was taken
-            res = transitionExecuted;
-        }
-        throw 42;
-        return res;
-    }
-
-    template<typename Event>
-    TransitionResult processEvent(std::optional<Event> event){
-        const auto t1 = processEventR(event);
-        const auto t2 = runToCompletion<Event>();
-        return t1 == transitionExecuted || t2 == transitionExecuted ? transitionExecuted : noTransition;
-    }
-
     template<typename Event>
     TransitionResult processEvent(Event event){
-        return processEvent(std::optional<Event>{event});
-    }
-    template<typename Event>
-    TransitionResult processEvent(){
-        return processEvent(std::optional<Event>{});
+        return activeState.has_value() &&
+                std::visit([event,this](auto&& currentStateT) { return processEventT<Event,decltype(currentStateT)>(event,currentStateT,0); }, activeState.value()) ?
+                    transitionExecuted :
+                    noTransition;
     }
 
-
-    static constexpr int infiniteLoopThreshold = 1000;
 };

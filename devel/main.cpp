@@ -1,6 +1,6 @@
 //nextState soll auch andere Rückgabetypen akzeptieren -> pointer nicht optionals
 
-#include "State.h"
+#include "GenericState.h"
 #include "StateA.h"
 #include "StateB.h"
 #include "StateMachine.h"
@@ -28,11 +28,24 @@
 
 //übergabeparameter enter leave leaveneter
 
+template<typename Event, typename AllEventsVariant>
+std::function<bool(AllEventsVariant)> asVariant(std::function<bool(Event)> func){
+
+    return [func](AllEventsVariant events){
+        if (std::holds_alternative<Event>(events))
+           std::visit([func](auto&& event) { return func(event); }, events);
+    };
+
+    //visit
+
+}
+
+
 
 int main()
 {
-    using Event = int;
-    using G = GenericState<Event,StateA*,StateB*>;
+    using AllEventsVariant = std::variant<int,const char*>;
+    using G = GenericState<AllEventsVariant,StateA*,StateB*>;
     using State = G::State;
     using M = StateMachine<State>;
 
@@ -40,13 +53,18 @@ int main()
     StateA state1;
     G stateg;
 
-    stateg.entryActions.emplace_back([](std::optional<Event>){std::cout<<"GenericState::entry\n";});
-    stateg.exitActions.emplace_back([](std::optional<Event>){std::cout<<"GenericState::exit\n";});
-    stateg.selfTransitionActions.emplace_back([](std::optional<Event>){std::cout<<"GenericState::selfTransition\n";});
+    stateg.entryActions.emplace_back([](std::optional<AllEventsVariant>){std::cout<<"GenericState::entry\n";});
+    stateg.exitActions.emplace_back([](std::optional<AllEventsVariant>){std::cout<<"GenericState::exit\n";});
+    stateg.selfTransitionActions.emplace_back([](std::optional<AllEventsVariant>){std::cout<<"GenericState::selfTransition\n";});
 
-    stateg.defineTransition([](int event) { return event==4;}, &state1);
-    stateg.defineTransition([](int event) { return event==5;}, &state2);
-    stateg.defineTransition([]() { return true;}, &stateg); //todo should be ininite loop
+    using Trans = G::TransitionT;
+
+    using FuncI = std::function<bool(int)>;
+    using FuncV = std::function<bool()>;
+
+    stateg.transitions.push_back(Trans(FuncI([](int event) { return event==4;}),&state1));
+    stateg.transitions.push_back(Trans(FuncI([](int event) { return event==5;}),&state2));
+    stateg.nullTransitions.push_back(Trans(FuncV([]() { return true;}),&stateg));
 
     state1.stateDefault = &stateg;
 
@@ -54,18 +72,33 @@ int main()
 
     M m{&stateg};
 
-    using S = NestedState<M, Event>;
-    using M2 = StateMachine<S::State>;
-    S sub(m);
 
-    M2 m2(&sub);
+    {
 
-    std::cout << "4" << std::endl;
-    m2.processEvent(4);
-    std::cout << "5" << std::endl;
-    m2.processEvent(5);
-    std::cout << "6" << std::endl;
-    m2.processEvent("6");
+
+
+        std::cout << "4" << std::endl;
+        m.processEvent(4);
+        std::cout << "5" << std::endl;
+        m.processEvent(5);
+        std::cout << "6" << std::endl;
+        m.processEvent("6");
+    }
+
+//    {
+//        using S = NestedState<M, Event>;
+//        using M2 = StateMachine<S::State>;
+//        S sub(m);
+
+//        M2 m2(&sub);
+
+//        std::cout << "4" << std::endl;
+//        m2.processEvent(4);
+//        std::cout << "5" << std::endl;
+//        m2.processEvent(5);
+//        std::cout << "6" << std::endl;
+//        m2.processEvent("6");
+//    }
 
 }
 
