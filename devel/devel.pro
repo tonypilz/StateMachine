@@ -13,7 +13,8 @@ HEADERS += \
     StateB.h \
     StateMachine.h \
     NestedState.h \
-    GenericState.h
+    GenericState.h \
+    Transition.h
 
 
 
