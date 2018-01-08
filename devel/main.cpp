@@ -17,6 +17,7 @@
 //arbitrary objects can be states without inheritance
 
 
+//allows compile time checked transitions (each event is a type)
 
 
 // graph doesnt know anything about Machine -> auch wenn ein knoten auch wieder eine machine -> dann weiss die untermaschine nichts von der maschine
@@ -25,6 +26,8 @@
 // todo: visitation aller sub maschinen -> darüber auch xml konvertierung
 
 // 4 ampeln parallel
+
+// minimalist version -> nur generic state
 
 
 int main()
@@ -38,9 +41,11 @@ int main()
     StateA state1;
     G stateg;
 
-    stateg.entryActions.emplace_back([](std::optional<AllEventsVariant>){std::cout<<"GenericState::entry\n";});
-    stateg.exitActions.emplace_back([](std::optional<AllEventsVariant>){std::cout<<"GenericState::exit\n";});
-    stateg.selfTransitionActions.emplace_back([](std::optional<AllEventsVariant>){std::cout<<"GenericState::selfTransition\n";});
+    using FuncVV = std::function<void()>;
+    using FuncVI = std::function<void(int)>;
+    stateg.defineEntryAction(FuncVV{[](){std::cout<<"GenericState::entry\n";}});
+    stateg.defineExitAction(FuncVI([](int ){std::cout<<"GenericState::exit\n";}));
+    stateg.defineSelfTransitionAction(FuncVV([](){std::cout<<"GenericState::selfTransition\n";}));
 
     using Trans = G::TransitionT;
 
@@ -57,6 +62,9 @@ int main()
 
     M m{&stateg};
 
+    //optional und vairant sollte impl detail sein -> nicht in definition, nicht in lambdas,
+    //change state methode bereit stellen für A und B
+    //statemachine mit durchreichen
 
     {
 

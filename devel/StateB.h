@@ -7,22 +7,23 @@
 struct StateA;
 
 struct StateB {
-    void entry(std::optional<int> event){std::cout<<"State2::entry"<<std::endl;}
-    void exit(std::optional<int> event){std::cout<<"State2::exit"<<std::endl;}
-    void selfTransition(std::optional<int> event){std::cout<<"State2::selfTransition"<<std::endl;}
 
+
+    template<typename T> void entry(T ){std::cout<<"StateB::entry B"<<std::endl;}
+    template<typename T> void exit(T ){std::cout<<"StateB::exit"<<std::endl;}
+    template<typename T> void selfTransition(T){std::cout<<"StateB::selfTransition"<<std::endl;}
 
     using OptionalAction = std::optional<std::function<void(std::optional<int>)>>;
     using V = std::variant<StateA*>;
 
 
     template<typename NewState>
-    bool makeTransition(int event, std::function<void(NewState)> changeState){
+    bool makeTransition(std::optional<int> event, std::function<void(NewState)> changeState){
         changeState(any);
         return true;
     }
     template<typename NewState>
-    bool makeTransition(const char*, std::function<void(NewState)> changeState){
+    bool makeTransition(std::optional<const char*>, std::function<void(NewState)> changeState){
         std::cout<<"nextState(const char*)\n";
         changeState(any);
         return true;
