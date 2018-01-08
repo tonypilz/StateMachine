@@ -7,7 +7,7 @@ struct StateMachine{
     std::optional<State> activeState;
     State initialState;
 
-    enum TransitionResult {transitionExecuted, noTransition};
+    enum TransitionResult {transitionCompleted, noTransition};
 
     template<typename Event>
     void clearCurrentState(){
@@ -41,12 +41,36 @@ struct StateMachine{
     bool processEventT(Event, ActiveState, long){
         return false;
     }
+
+    template<typename ActiveState>
+    auto processEventTX(ActiveState currentStateT, int) -> decltype(currentStateT->makeTransition(SetFunction{}),bool()) {
+        return currentStateT->makeTransition(SetFunction{[this](State nextState){activeState = nextState;}});
+    }
+
+    template<typename ActiveState>
+    bool processEventTX(ActiveState, long){
+        return false;
+    }
+
     template<typename Event>
     TransitionResult processEvent(Event event){
-        return activeState.has_value() &&
-                std::visit([event,this](auto&& currentStateT) { return processEventT<Event,decltype(currentStateT)>(event,currentStateT,0); }, activeState.value()) ?
-                    transitionExecuted :
-                    noTransition;
+
+        //initial event
+        if (activeState.has_value()==false ||
+                std::visit([event,this](auto&& currentStateT) { return processEventT<Event,decltype(currentStateT)>(event,currentStateT,0); }, activeState.value()) == false)
+            return noTransition;
+
+        //null transitions
+        for(int i=0;i<infinitLoopThreshold;++i)
+            if (activeState.has_value()==false ||
+                    std::visit([this](auto&& currentStateT) { return processEventTX<decltype(currentStateT)>(currentStateT,0); }, activeState.value()) == false)
+                return transitionCompleted;
+
+        throw 42;//infinite loop detected
+
+        return transitionCompleted;
     }
+
+    static constexpr auto infinitLoopThreshold = 100;
 
 };

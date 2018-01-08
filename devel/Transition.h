@@ -7,21 +7,38 @@
 #include <variant>
 
 template<typename State, typename Event>
-void tryCallExit(State state, std::optional<Event> event){
+void tryCallExit(State state, Event event){
     state->exit(event);
+}
+template<typename State>
+void tryCallExit(State state){
+    state->exit();
 }
 
 template<typename Event, typename State>
-auto tryCallEntryX( State state, std::optional<Event> event, int) -> decltype(state->entry(event),void()){
+auto tryCallEntryX( State state, Event event, int) -> decltype(state->entry(event),void()){
     state->entry(event);
 }
 template<typename Event, typename State>
-void tryCallEntryX( State state, std::optional<Event> event, long) {
+void tryCallEntryX( State state, Event event, long) {
 }
 
 template<typename Event, typename... States>
-void tryCallEntry( std::variant<States...> states, std::optional<Event> event){
+void tryCallEntry( std::variant<States...> states, Event event){
    std::visit([event](auto&& state) { tryCallEntryX(state,event,0); }, states);
+}
+
+template<typename State>
+auto tryCallEntryX( State state, int) -> decltype(state->entry(),void()){
+    state->entry();
+}
+template<typename State>
+void tryCallEntryX( State state, long) {
+}
+
+template<typename... States>
+void tryCallEntry( std::variant<States...> states){
+   std::visit([](auto&& state) { tryCallEntryX(state,0); }, states);
 }
 
 
@@ -80,7 +97,7 @@ struct Transition {
 
 
     template<typename OldState, typename Event, typename NewState>
-    bool apply(OldState oldState, std::optional<Event> event, std::function<void(NewState)> changeState){
+    bool apply(OldState oldState, Event event, std::function<void(NewState)> changeState){
 
         if (guard(event)==false) return false;//transition not applicable
 
@@ -93,6 +110,25 @@ struct Transition {
         if (action.has_value()) action.value()(event); //transition action
 
         tryCallEntry(nextState,event);
+
+        return true;
+    }
+
+
+    template<typename OldState, typename NewState>
+    bool apply(OldState oldState, std::function<void(NewState)> changeState){
+
+        if (guard(OptionalEvent{})==false) return false;//transition not applicable
+
+        //apply transition
+
+        tryCallExit(oldState);
+
+        changeState(nextState);
+
+        if (action.has_value()) action.value()(OptionalEvent{}); //transition action
+
+        tryCallEntry(nextState);
 
         return true;
     }

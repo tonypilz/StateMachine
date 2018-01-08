@@ -26,21 +26,6 @@
 
 // 4 ampeln parallel
 
-//übergabeparameter enter leave leaveneter
-
-template<typename Event, typename AllEventsVariant>
-std::function<bool(AllEventsVariant)> asVariant(std::function<bool(Event)> func){
-
-    return [func](AllEventsVariant events){
-        if (std::holds_alternative<Event>(events))
-           std::visit([func](auto&& event) { return func(event); }, events);
-    };
-
-    //visit
-
-}
-
-
 
 int main()
 {
