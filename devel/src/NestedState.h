@@ -51,8 +51,8 @@ struct NestedState : public GenericState<AllEventsVariant, NestedState<StateMach
 
     StateMachineT& machine;
 
-    template<typename Event, typename NewStateVariant>
-    EventProcessingResult makeTransition(std::optional<Event> event, std::function<void(NewStateVariant)> changeState){
+    template<typename Event, typename ChangeStateFunc>
+    EventProcessingResult makeTransition(std::optional<Event> event, ChangeStateFunc changeState){
 
         if(Superclass::makeTransition(event,changeState)==EventProcessingResult::transitionCompleted)
             return EventProcessingResult::transitionCompleted;
@@ -61,9 +61,9 @@ struct NestedState : public GenericState<AllEventsVariant, NestedState<StateMach
         return machine.processEvent(event);
     }
 
-    template<typename NewStateVariant>
-    EventProcessingResult makeTransition(std::function<void(NewStateVariant)> changeState){
-        return Superclass::template makeTransition<NewStateVariant>(changeState);
+    template<typename ChangeStateFunc>
+    EventProcessingResult makeTransition(ChangeStateFunc changeState){
+        return Superclass::template makeTransition<ChangeStateFunc>(changeState);
     }
 
 };

@@ -66,11 +66,13 @@ struct Transition {
     {}
 
 
-    template<typename OldState, typename NewState>
-    bool apply(OldState oldState, OptionalEvent event, std::function<void(NewState)> changeState){
+    template<typename OldState, typename ChangeStateFunc>
+    bool apply(OldState oldState, OptionalEvent event, ChangeStateFunc changeState){
           if (guard(event)==false) return false;//transition not applicable
 
         //apply transition
+
+        //changeState(
 
         tryCallExit(oldState, event);
 

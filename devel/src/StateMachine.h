@@ -17,24 +17,24 @@ struct StateMachine{
 
     using SetFunction = std::function<void(State)>;
 
-    template<typename Event, typename ActiveState>
-    auto processEventT(std::optional<Event> event, ActiveState currentStateT, int) -> decltype(currentStateT->makeTransition(event,SetFunction{}),EventProcessingResult()) {
-        return currentStateT->makeTransition(event,SetFunction{[this](State nextState){activeState = nextState;}});
+    template<typename Event, typename ActiveState,typename ChangeStateFunc>
+    auto processEventT(std::optional<Event> event, ActiveState currentStateT, ChangeStateFunc func, int) -> decltype(currentStateT->makeTransition(event,func),EventProcessingResult()) {
+        return currentStateT->makeTransition(event,func);
     }
 
-    template<typename Event, typename ActiveState>
-    EventProcessingResult processEventT(std::optional<Event>, ActiveState, long){
+    template<typename Event, typename ActiveState,typename ChangeStateFunc>
+    EventProcessingResult processEventT(std::optional<Event>, ActiveState, ChangeStateFunc, long){
         return EventProcessingResult::transitionError;
     }
 
 
-    template<typename ActiveState>
-    auto processEventTX(ActiveState currentStateT, int) -> decltype(currentStateT->makeTransition(SetFunction{}),EventProcessingResult()) {
-        return currentStateT->makeTransition(SetFunction{[this](State nextState){activeState = nextState;}});
+    template<typename ActiveState,typename ChangeStateFunc>
+    auto processEventTX(ActiveState currentStateT, ChangeStateFunc func, int) -> decltype(currentStateT->makeTransition(func),EventProcessingResult()) {
+        return currentStateT->makeTransition(func);
     }
 
-    template<typename ActiveState>
-    EventProcessingResult processEventTX(ActiveState currentStateT, long){
+    template<typename ActiveState,typename ChangeStateFunc>
+    EventProcessingResult processEventTX(ActiveState, ChangeStateFunc, long){
         return EventProcessingResult::transitionError;
     }
 
@@ -43,7 +43,13 @@ struct StateMachine{
 
         //null transitions
         for(int i=0;i<infinitLoopThreshold;++i)
-            if (auto r = std::visit([this](auto&& currentStateT) { return processEventTX<decltype(currentStateT)>(currentStateT,0); }, activeState);r != EventProcessingResult::transitionCompleted)
+            if (auto r = std::visit([this](auto&& currentStateT) {
+                                    return processEventTX<decltype(currentStateT)>(
+                                        currentStateT,
+                                        [this](State nextState){activeState = nextState;},
+                                        0); },
+                                    activeState);
+                    r != EventProcessingResult::transitionCompleted)
                 return r; //noting changed so we do not try more null transitions
 
         throw 42;//infinite loop detected
@@ -55,7 +61,14 @@ struct StateMachine{
     EventProcessingResult processEvent(std::optional<Event> event){
 
         //initial event
-        if (auto r = std::visit([event,this](auto&& currentStateT) { return processEventT<Event,decltype(currentStateT)>(event,currentStateT,0); }, activeState);r != EventProcessingResult::transitionCompleted)
+        if (auto r = std::visit([event,this](auto&& currentStateT) {
+                                return processEventT<Event,decltype(currentStateT)>(
+                                    event,
+                                    currentStateT,
+                                    [this](State nextState){activeState = nextState;},
+                                    0); },
+                                activeState);
+                r != EventProcessingResult::transitionCompleted)
             return r; //nothing changed so we do not try null transitions
 
         return processEvent();

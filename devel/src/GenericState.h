@@ -71,8 +71,8 @@ struct GenericState {
     void selfTransition(OptionalEvent event){executeAll(event,selfTransitionActions);}
 
 
-    template<typename NewStateVariant>
-    EventProcessingResult makeTransition(std::function<void(NewStateVariant)> changeState){
+    template<typename ChangeStateFunc>
+    EventProcessingResult makeTransition(ChangeStateFunc changeState){
 
         auto it = std::find_if(nullTransitions.begin(),
                                nullTransitions.end(),
@@ -83,8 +83,8 @@ struct GenericState {
 
     }
 
-    template<typename Event, typename NewStateVariant>
-    EventProcessingResult makeTransition(std::optional<Event> event, std::function<void(NewStateVariant)> changeState){
+    template<typename Event, typename ChangeStateFunc>
+    EventProcessingResult makeTransition(std::optional<Event> event, ChangeStateFunc changeState){
 
         if (event.has_value()) {
 
