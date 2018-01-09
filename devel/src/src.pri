@@ -7,4 +7,5 @@ HEADERS += \
     $$PWD/Transition.h \
     $$PWD/EventProcessingResult.h \
     $$PWD/transitionHelper.h \
-    $$PWD/helper.h
+    $$PWD/helper.h \
+    $$PWD/stateMachineHelper.h
