@@ -41,7 +41,7 @@ struct StateMachine{
                                             0); },
                                     activeState);
                     r != EventProcessingResult::transitionCompleted)
-                return r; //noting changed so we do not try more null transitions
+                return r; //nothing changed so we do not try more null transitions
 
         throw 42;//infinite loop detected
 
