@@ -16,9 +16,10 @@ The current implementation properties are:
 - Run to completion is supported.
 - Transtions and Null-Transitions can have arbitrary guards and actions.
 - Arbitrary actions on entry, exit and self transtion.
-- no virtual function calls used.
-
-Note that allocation of states is not done by the state machine and must be done by the user.
+- No virtual function calls used.
+- Small (~350sloc) and therefore easy to reason about.
+- No direct memory allocations (Note that allocation of states and machines is not done by the state machine and must be done by the user).
+- Header Only, with no depencies except stl
 
 # Drawbacks
 The current implementation has the following problems:
@@ -28,12 +29,13 @@ The current implementation has the following problems:
 
 # Todo
 The following issues are currently open:
- - simplify the definition if possible
- - verify usability on production scale state machines
- - add examples
- - add missing features eg historizing
- - check speed and assembly size
- - some function calls not optimizied
- - add documentation
- - improve naming compliance with https://en.wikipedia.org/wiki/UML_state_machine
- - improve consistency of pointers template arguments
+ - simplification of thedefinition of states (especially nested states)
+ - usability on production scale state machines must be evaluated
+ - examples missing
+ - features missing, eg historizing, external/internal transitions
+ - speed and assembly size must be evaluated
+ - documentation
+ - compliance of names with https://en.wikipedia.org/wiki/UML_state_machine should be improved
+ - consistency of pointers in template arguments should be checked
+ - tests need to be added
+ - nullptr checks missing
