@@ -5,35 +5,6 @@
 #include <variant>
 
 
-template<typename NewVariant, typename OldVariant>
-NewVariant variantCast(OldVariant old){
-    return std::visit([](auto&& oldT){return NewVariant{oldT};},old);
-}
-
-template<typename NewVariant, typename OldVariant>
-std::optional<NewVariant> optionalVariantCast(std::optional<OldVariant> old){
-    return old.has_value() ? variantCast<NewVariant,OldVariant>(old.value()) : std::optional<NewVariant> {};
-}
-
-
-
-template<typename State, typename Event>
-void tryCallExit(State state, Event event){
-    state->exit(event);
-}
-
-template<typename Event, typename State>
-auto tryCallEntryX( State state, Event event, int) -> decltype(state->entry(event),void()){
-    state->entry(event);
-}
-template<typename Event, typename State>
-void tryCallEntryX( State state, Event event, long) {
-}
-
-template<typename Event, typename... States>
-void tryCallEntry( std::variant<States...> states, Event event){
-   std::visit([event](auto&& state) { tryCallEntryX(state,event,0); }, states);
-}
 
 
 

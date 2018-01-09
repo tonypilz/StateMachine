@@ -18,6 +18,18 @@ struct StateMachine{
     StateMachine(State initialState_) : activeState(initialState_){}
     State activeState; //there is alway a usable state!
 
+    template<typename Event, typename NextState, typename TransitionAction>
+    void changeState(Event event, NextState nextState, TransitionAction transitionAction) {
+
+        tryCallExit(activeState, event);
+
+        transitionAction(event);
+
+        activeState = variantCast<State>(nextState);
+
+        tryCallEntry(activeState,event);
+    }
+
     EventProcessingResult processEvent(){
 
         //run to completion by executing null transitions
@@ -25,7 +37,7 @@ struct StateMachine{
             if (auto r = std::visit([this](auto&& currentStateT) {
                                         return tryCallMakeTransition(
                                             currentStateT,
-                                            [this](auto&& nextState){activeState = nextState;},
+                                            [this](auto&& event, auto&& nextState, auto&& transitionOp){ changeState(event,nextState,transitionOp);},
                                             0); },
                                     activeState);
                     r != EventProcessingResult::transitionCompleted)
@@ -44,7 +56,7 @@ struct StateMachine{
                                     return tryCallMakeTransition(
                                         event,
                                         currentStateT,
-                                        [this](auto&& nextState){activeState = nextState;},
+                                        [this](auto&& event, auto&& nextState, auto&& transitionOp){ changeState(event,nextState,transitionOp);},
                                         0); },
                                 activeState);
                 r != EventProcessingResult::transitionCompleted)

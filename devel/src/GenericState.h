@@ -77,7 +77,7 @@ struct GenericState {
         auto it = std::find_if(nullTransitions.begin(),
                                nullTransitions.end(),
                                [changeState,this](auto&& transition){
-                                        return transition.apply(this, OptionalEvent{},changeState);}); //todo check for more than one condition true -> throw
+                                        return transition.apply(OptionalEvent{},changeState);}); //todo check for more than one condition true -> throw
 
         return it!=nullTransitions.end() ? EventProcessingResult::transitionCompleted : EventProcessingResult::eventNotProcessed;
 
@@ -91,7 +91,7 @@ struct GenericState {
             auto it = std::find_if(transitions.begin(),
                                    transitions.end(),
                                    [event,changeState,this](auto&& transition){
-                                        return transition.apply(this,event,changeState);}); //todo check for more than one condition true -> throw
+                                        return transition.apply(event,changeState);}); //todo check for more than one condition true -> throw
             return it!=transitions.end() ? EventProcessingResult::transitionCompleted : EventProcessingResult::eventNotProcessed;
         }
 

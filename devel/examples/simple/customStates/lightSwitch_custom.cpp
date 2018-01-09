@@ -12,13 +12,12 @@ struct StateOff;
 
 struct StateOn {
 
-   void entry(){std::cout<<"Light switchted on! \n";}
+   template<typename T> void entry(T){std::cout<<"Light switchted on! \n";}
 
-   template<typename NewStateVariant>
-   EventProcessingResult makeTransition(std::optional<bool> event, std::function<void(NewStateVariant)> changeState){
+   template<typename ChangeStateFunc>
+   EventProcessingResult makeTransition(std::optional<bool> event, ChangeStateFunc changeState){
 
-       changeState(stateOff);
-       stateOff->entry(); //notify next state
+       changeState(event,stateOff,[](auto&&){});
        return EventProcessingResult::transitionCompleted;
    }
 
@@ -27,13 +26,12 @@ struct StateOn {
 
 struct StateOff {
 
-   void entry(){std::cout<<"Light switchted off! \n";}
+   template<typename T> void entry(T){std::cout<<"Light switchted off! \n";}
 
-   template<typename NewStateVariant>
-   EventProcessingResult makeTransition(std::optional<bool> event, std::function<void(NewStateVariant)> changeState){
+   template<typename ChangeStateFunc>
+   EventProcessingResult makeTransition(std::optional<bool> event, ChangeStateFunc changeState){
 
-       changeState(stateOn);
-       stateOn->entry(); //notify next state
+       changeState(event,stateOn,[](auto&&){});
        return EventProcessingResult::transitionCompleted;
    }
 
