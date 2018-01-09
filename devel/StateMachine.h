@@ -24,7 +24,6 @@ struct StateMachine{
 
     template<typename Event, typename ActiveState>
     EventProcessingResult processEventT(std::optional<Event>, ActiveState, long){
-        std::cout << "transitionError X" << std::endl;
         return EventProcessingResult::transitionError;
     }
 
@@ -36,8 +35,6 @@ struct StateMachine{
 
     template<typename ActiveState>
     EventProcessingResult processEventTX(ActiveState currentStateT, long){
-
-        std::cout << "transitionError Y" << std::endl;
         return EventProcessingResult::transitionError;
     }
 
@@ -46,8 +43,8 @@ struct StateMachine{
 
         //null transitions
         for(int i=0;i<infinitLoopThreshold;++i)
-            if (std::visit([this](auto&& currentStateT) { return processEventTX<decltype(currentStateT)>(currentStateT,0); }, activeState) != EventProcessingResult::transitionCompleted)
-                return EventProcessingResult::eventNotProcessed; //noting changed so we do not try more null transitions
+            if (auto r = std::visit([this](auto&& currentStateT) { return processEventTX<decltype(currentStateT)>(currentStateT,0); }, activeState);r != EventProcessingResult::transitionCompleted)
+                return r; //noting changed so we do not try more null transitions
 
         throw 42;//infinite loop detected
 
@@ -58,8 +55,8 @@ struct StateMachine{
     EventProcessingResult processEvent(std::optional<Event> event){
 
         //initial event
-        if ( std::visit([event,this](auto&& currentStateT) { return processEventT<Event,decltype(currentStateT)>(event,currentStateT,0); }, activeState) != EventProcessingResult::transitionCompleted)
-            return EventProcessingResult::eventNotProcessed; //nothing changed so we do not try null transitions
+        if (auto r = std::visit([event,this](auto&& currentStateT) { return processEventT<Event,decltype(currentStateT)>(event,currentStateT,0); }, activeState);r != EventProcessingResult::transitionCompleted)
+            return r; //nothing changed so we do not try null transitions
 
         return processEvent();
     }

@@ -5,10 +5,13 @@
 #include "StateMachine.h"
 #include "NestedState.h"
 #include <iostream>
-
+#include <examples/simple/genericStates/lightSwitch.h>
 
 int main()
 {
+    main_lightSwitch_minimal();
+
+    return 0;
     using AllEventsVariant = std::variant<int,const char*,ExitEvent,EntryEvent>;
     using G = GenericState<AllEventsVariant,StateA*,StateB*>;
     using State = G::State;
