@@ -42,6 +42,8 @@ void tryCallEntry( std::variant<States...> states, Event event){
 template<typename Event, typename AllEventsVariantOptional>
 std::function<bool(AllEventsVariantOptional)> generalize(std::function<bool(Event)> func, bool noArgReturnValue, bool unexpectedArgTypeReturnValue){
 
+    if (!func) return std::function<bool(AllEventsVariantOptional)>{};
+
     return [=](AllEventsVariantOptional ev){
         if (ev.has_value()==false) return noArgReturnValue;
         auto e = ev.value();
@@ -53,6 +55,8 @@ std::function<bool(AllEventsVariantOptional)> generalize(std::function<bool(Even
 
 template<typename Event, typename AllEventsVariantOptional>
 std::function<void(AllEventsVariantOptional)> generalize(std::function<void(Event)> func){
+
+    if (!func) return std::function<void(AllEventsVariantOptional)>{};
 
     return [=](AllEventsVariantOptional ev){
         if (ev.has_value()==false) return;
@@ -66,6 +70,8 @@ std::function<void(AllEventsVariantOptional)> generalize(std::function<void(Even
 template<typename AllEventsVariantOptional>
 std::function<void(AllEventsVariantOptional)> generalize(std::function<void()> func, std::function<void()> funcNoValue){
 
+    if (!func || !funcNoValue) return std::function<void(AllEventsVariantOptional)>{};
+
     return [=](AllEventsVariantOptional ev){
         if (ev.has_value()) func(); else funcNoValue();
     };
@@ -74,6 +80,8 @@ std::function<void(AllEventsVariantOptional)> generalize(std::function<void()> f
 
 template<typename AllEventsVariantOptional>
 std::function<bool(AllEventsVariantOptional)> generalize( std::function<bool()> func, std::function<bool()> funcNoValue){
+
+    if (!func || !funcNoValue) return std::function<bool(AllEventsVariantOptional)>{};
 
     return [=](AllEventsVariantOptional ev){
         return ev.has_value() ? func() : funcNoValue();

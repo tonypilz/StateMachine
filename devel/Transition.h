@@ -23,20 +23,48 @@ struct Transition {
     using OptionalEvent = std::optional<AllEventsVariant>;
 
     using Action = std::function<void(OptionalEvent)>;
-    using OptionalAction = std::optional<Action>;
 
     using Guard = std::function<bool(OptionalEvent)>;
 
     template<typename Event>
-    Transition( std::function<bool(Event)> guard_, NextStateVariant nextState_ ):
-        guard(generalize<Event,std::optional<AllEventsVariant>> (guard_,false,false)),nextState(nextState_){}
+    Transition(
+            std::function<bool(Event)> guard_,
+            NextStateVariant nextState_,
+            std::function<void(Event)> action_ = std::function<void(Event)>{}):
+        guard(generalize<Event,OptionalEvent> (guard_,false,false)),
+        nextState(nextState_),
+        action(generalize<Event,OptionalEvent>(action_))
+    {}
 
+    template<typename Event>
+    Transition(
+            std::function<bool(Event)> guard_,
+            NextStateVariant nextState_,
+            std::function<void()> action_):
+        guard(generalize<Event,OptionalEvent> (guard_,false,false)),
+        nextState(nextState_),
+        action(generalize<Event,OptionalEvent>(action_))
+    {}
 
-    Transition( std::function<bool()> guard_, NextStateVariant nextState_ ):
-        guard(generalize<std::optional<AllEventsVariant>> (guard_,guard_)),nextState(nextState_){}
+    template<typename Event>
+    Transition(
+            std::function<bool()> guard_,
+            NextStateVariant nextState_,
+            std::function<void(Event)> action_):
+        guard(generalize<std::optional<AllEventsVariant>> (guard_,guard_)),
+        nextState(nextState_),
+        action(generalize<OptionalEvent>(action_))
+    {}
 
-//    Transition( Guard guard_, NextStateVariant nextState_ ):
-//        guard(guard_),nextState(nextState_){}
+    Transition(
+            std::function<bool()> guard_,
+            NextStateVariant nextState_,
+            std::function<void()> action_ = std::function<void()>{}):
+        guard(generalize<std::optional<AllEventsVariant>> (guard_,guard_)),
+        nextState(nextState_),
+        action(generalize<OptionalEvent>(action_,action_))
+    {}
+
 
     template<typename OldState, typename NewState>
     bool apply(OldState oldState, OptionalEvent event, std::function<void(NewState)> changeState){
@@ -48,7 +76,7 @@ struct Transition {
 
         std::visit([this,changeState](auto&& nextStateT){changeState(nextStateT);},nextState);
 
-        if (action.has_value()) action.value()(event); //transition action
+        if (action) action(event); //transition action
 
         tryCallEntry(nextState,event);
 
@@ -61,7 +89,7 @@ struct Transition {
     }
 
     Guard guard;
-    OptionalAction action;
+    Action action;
     NextStateVariant nextState;
 
 };
