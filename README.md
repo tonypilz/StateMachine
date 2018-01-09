@@ -48,3 +48,4 @@ The following issues are currently open:
  - consistency of pointers in template arguments should be checked
  - tests need to be added
  - nullptr checks missing
+ - add public/private qualifier
