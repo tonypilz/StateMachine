@@ -22,23 +22,23 @@ see
  - devel/examples/simple/customStates/lightSwitch_custom.cpp
 
 # Features
-The current implementation properties are:
-- The type of the events is not restriced, eg types could be int or std::string.
-- The type of the states is not restricted, custom states need only provide the functions they want to support.
-- Hierachical state machines are supported.
-- Run to completion is supported.
-- Transtions and Null-Transitions can have arbitrary guards and actions.
-- Arbitrary actions on entry, exit and self transtion.
-- Lightweight (~350sloc) and therefore easy to reason about.
-- No direct memory allocations by library (but indirect by using eg std::vector).
+Currently the following features are implemented:
+- Unrestricted type of events, eg could be int or std::string
+- Unrestricted type of states, custom states need only provide the functions they want to support
+- Nesting of state machines
+- Run to completion
+- Arbitrary guards and actions on transitions
+- Arbitrary actions on entry, exit and self transtion
+- Lightweight (~400sloc) and therefore easy to reason about
+- No direct memory allocations by the library (indirect allocations happend due to using eg std::vector)
 - Header Only, with no depencies except for the stl
 
 # Drawbacks
-The current implementation drawbacks are:
+The drawbacks of the approach are:
  - defining state machines with mixed custom- and generic states is rather complicated due to templates
  - defining hierachical state machines is complex due to templates
- - compiler-messages are hard to read due to extensive template usage
-
+ - compiler-messages are hard to read due to extensive template usage (could be improved by static_asserts)
+ - Raw Pointer to states are beeing used, which cannot be avoided easily
 
 # Todo
 The following issues are currently open:
