@@ -9,7 +9,7 @@
 
 int main()
 {
-    main_lightSwitch_minimal();
+    main_lightSwitch_minimal_generic();
 
     return 0;
     using AllEventsVariant = std::variant<int,const char*,ExitEvent,EntryEvent>;

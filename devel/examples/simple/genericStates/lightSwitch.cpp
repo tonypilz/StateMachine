@@ -5,7 +5,7 @@
 
 
 
-int main_lightSwitch_minimal()
+int main_lightSwitch_minimal_generic()
 {
 
     //
