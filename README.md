@@ -1,12 +1,23 @@
 # StateMachine
-A lightweight header only C++17 finite state machine library
+This library implements lightweight header only finite state machine NOT using the c++17 features std::optional and std::variant and NOT inheritance / virtual function calls.
+
+# Goals
+The main goals were to evaluate:
+ - if a full featured state machine can be implemented by only using std::optional, std::variant and templates and NOT by using inheritance / virtual function calls
+ - if the implementation is scalable to real world production size state machines.
+
+The goals were met partially:
+ - It can be done
+ - The code is small (~400sloc, requires 4 classes wich are loosely coupled but have rather complex templates, see devel/src/*) but not all features are implemeneted yet (namely external transitions, historizing)
+ - Scalability remains open to be evaluated.
+
 
 # Status
 The current implementation is a proof of concept.
 
 # Example
 
-see devel/main.cpp
+see devel/examples/simple/genericStates/lightSwitch.cpp
 
 # Features
 The current implementation properties are:
@@ -16,7 +27,6 @@ The current implementation properties are:
 - Run to completion is supported.
 - Transtions and Null-Transitions can have arbitrary guards and actions.
 - Arbitrary actions on entry, exit and self transtion.
-- No virtual function calls used.
 - Small (~350sloc) and therefore easy to reason about.
 - No direct memory allocations (Note that allocation of states and machines is not done by the state machine and must be done by the user).
 - Header Only, with no depencies except stl
@@ -29,7 +39,6 @@ The current implementation has the following problems:
 
 # Todo
 The following issues are currently open:
- - simplification of thedefinition of states (especially nested states)
  - usability on production scale state machines must be evaluated
  - examples missing
  - features missing, eg historizing, external/internal transitions

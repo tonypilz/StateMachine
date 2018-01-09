@@ -1,8 +1,6 @@
-
 #include <src/GenericState.h>
 #include <src/StateMachine.h>
 #include <iostream>
-
 
 
 int main_lightSwitch_minimal_generic()
@@ -39,7 +37,7 @@ int main_lightSwitch_minimal_generic()
     stateOff.defineTransition(Guard{[](SwitchEventType) { return true;}},&stateOn);
 
     //create machine
-    StateMachine m{&stateOff};
+    StateMachine machine{&stateOff};
 
 
     //start interaction
@@ -48,7 +46,7 @@ int main_lightSwitch_minimal_generic()
 
     for(int i=0;i<3;++i) {
         std::cout << "pressing button " << i << " \n";
-        m.processEvent(e); //send event
+        machine.processEvent(e);
     }
 
 //    prints:
