@@ -1,6 +1,6 @@
 
-#include <GenericState.h>
-#include <StateMachine.h>
+#include <src/GenericState.h>
+#include <src/StateMachine.h>
 #include <iostream>
 
 
@@ -47,17 +47,18 @@ int main_lightSwitch_minimal_generic()
     SwitchEventType e; //the value is not evaluated by the guards so it doesnt matter here
 
     for(int i=0;i<3;++i) {
-        std::cout << "pressing button \n"; //send event
-        m.processEvent(e);
+        std::cout << "pressing button " << i << " \n";
+        m.processEvent(e); //send event
     }
 
 //    prints:
-//            pressing button
-//            Light switchted on
-//            pressing button
-//            Light switchted off
-//            pressing button
-//            Light switchted on
+
+//    pressing button 0
+//    Light switchted on
+//    pressing button 1
+//    Light switchted off
+//    pressing button 2
+//    Light switchted on
 
     return 0;
 

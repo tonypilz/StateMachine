@@ -1,8 +1,8 @@
 #pragma once
 
-#include "GenericState.h"
+#include <src/GenericState.h>
 #include <iostream>
-#include "NestedState.h"
+#include <src/NestedState.h>
 
 struct StateB;
 

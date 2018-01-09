@@ -4,8 +4,8 @@
 #include <iostream>
 #include <variant>
 
-#include "EventProcessingResult.h"
-#include "NestedState.h"
+#include <src/EventProcessingResult.h>
+#include <src/NestedState.h>
 
 struct StateA;
 /**
