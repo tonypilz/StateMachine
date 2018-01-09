@@ -69,21 +69,20 @@ int main()
 
         GG initialState;
 
-        initialState.defineNullTransition(FuncV([]() { return true;}),&sub);
+        initialState.defineNullTransition(FuncV([]() {return true;}),&sub);
 
-        S::State xx = &initialState;
 
-        using M2 = StateMachine<S::State>;
-        M2 m2(xx);
+        using M2 = StateMachine<std::variant<S*,GG*,GenericState<AllEventsVariant>*>>;
+        M2 m2(&initialState);
 
         std::cout << "xstart" << std::endl;
         m2.processEvent();
         std::cout << "x4" << std::endl;
-        m2.processEvent(4);
+        m2.processEvent(7);
         std::cout << "x5" << std::endl;
-        m2.processEvent(5);
+        m2.processEvent(8);
         std::cout << "x6" << std::endl;
-        m2.processEvent("6");
+        m2.processEvent("9");
     }
 
 }

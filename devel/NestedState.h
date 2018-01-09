@@ -34,6 +34,8 @@ struct NestedState : public GenericState<AllEventsVariant, NestedState<StateMach
         using FuncEntry = std::function<bool(EntryEvent)>;
         inactiveState.defineTransition(FuncEntry([](EntryEvent) {return true;}),&initialState);
 
+        machine.activeState = &inactiveState; //todo
+
         auto r = [&inactiveState](auto&& reachableState){
             using FuncExit = std::function<bool(ExitEvent)>;
             reachableState->defineTransition(FuncExit([](ExitEvent) {return true;}),&inactiveState);
@@ -57,6 +59,11 @@ struct NestedState : public GenericState<AllEventsVariant, NestedState<StateMach
 
         //no next state - forward to sub machine
         return machine.processEvent(event);
+    }
+
+    template<typename NewStateVariant>
+    EventProcessingResult makeTransition(std::function<void(NewStateVariant)> changeState){
+        return Superclass::template makeTransition<NewStateVariant>(changeState);
     }
 
 };

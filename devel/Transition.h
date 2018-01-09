@@ -33,7 +33,7 @@ struct Transition {
 
 
     Transition( std::function<bool()> guard_, NextStateVariant nextState_ ):
-        guard(generalize<std::optional<AllEventsVariant>> ([](){return false;},guard_)),nextState(nextState_){}
+        guard(generalize<std::optional<AllEventsVariant>> (guard_,guard_)),nextState(nextState_){}
 
 //    Transition( Guard guard_, NextStateVariant nextState_ ):
 //        guard(guard_),nextState(nextState_){}

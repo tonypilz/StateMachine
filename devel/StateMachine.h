@@ -24,6 +24,7 @@ struct StateMachine{
 
     template<typename Event, typename ActiveState>
     EventProcessingResult processEventT(std::optional<Event>, ActiveState, long){
+        std::cout << "transitionError X" << std::endl;
         return EventProcessingResult::transitionError;
     }
 
@@ -34,7 +35,9 @@ struct StateMachine{
     }
 
     template<typename ActiveState>
-    EventProcessingResult processEventTX(ActiveState, long){
+    EventProcessingResult processEventTX(ActiveState currentStateT, long){
+
+        std::cout << "transitionError Y" << std::endl;
         return EventProcessingResult::transitionError;
     }
 
